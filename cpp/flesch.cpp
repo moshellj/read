@@ -9,21 +9,43 @@ using namespace std;
 vector<char> vowels{'a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U', 'y', 'Y'};
 vector<char> sentend{'.', ':', ';', '?', '!'};
 
+struct doc {
+	int word;
+	int syll;
+	int sent;
+};
+
+struct doc tally(char filename[]);
+
 int main(){
+	doc count = tally("/home/moshell_jw/alice.txt");
+	
+	int alpha;
+	int beta;
+        alpha = (double)count.syll / (double)count.word;
+        beta = (double)count.word / (double)count.sent;
+        double dubIndex = 206.835 - alpha*84.6 - beta*1.015;
+        int findex = round(dubIndex);
+
+        cout << findex << endl;
+
+}
+
+
+struct doc tally(char filename[]){
 	int wordcount = 0;
 	int syllcount = 0;
 	int sentcount = 0;
 	bool validword = false;
 	bool validsent = false;
 	bool lchvowel = false;
-	double alpha;
-	double beta;
 	
 	ifstream text;
-	text.open("/home/moshell_jw/alice.txt");
+	text.open(filename);
 	if(!text.is_open()){
 		cerr << "Failed to open." << endl;
-		return 0;
+		doc empty;
+		return empty;
 	}
 	char w = 0;
 	
@@ -60,15 +82,14 @@ int main(){
 		++sentcount;
 	}
 
-	alpha = (double)syllcount / (double)wordcount;
-	beta = (double)wordcount / (double)sentcount;
-	double dubIndex = 206.835 - alpha*84.6 - beta*1.015;
-	int index = round(dubIndex);
-	
-	cout << index << endl;
+	doc give;
+	give.word = wordcount;
+	give.syll = syllcount;
+	give.sent = sentcount;
 
-
-
-
-
+	return give;
 }
+
+
+
+
