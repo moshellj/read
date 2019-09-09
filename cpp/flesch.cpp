@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 #include <fstream>
 #include <algorithm>
 #include <cmath>
@@ -17,21 +18,30 @@ struct doc {
 
 struct doc tally(char filename[]);
 
-int main(){
-	doc count = tally("/home/moshell_jw/alice.txt");
+int main(int argc, char* argv[]){
+	if(argc != 2){
+		cerr << "Wrong number of arguments.\n";
+	}
+	doc count = tally(argv[1]);
 	
-	int alpha;
-	int beta;
+	//flesch
+	double alpha;
+	double beta;
         alpha = (double)count.syll / (double)count.word;
         beta = (double)count.word / (double)count.sent;
         double dubIndex = 206.835 - alpha*84.6 - beta*1.015;
         int findex = round(dubIndex);
-
-        cout << findex << endl;
+	
+	//flesch-kincaid
+	alpha = (double)count.syll / (double)count.word;
+	beta = (double)count.word / (double)count.sent;
+	dubIndex = alpha*11.8 + beta*0.39 - 15.59;
+	
+	printf("%i\t%.1f\n", findex, dubIndex);
 
 }
 
-
+//counts the words, syllables, and sentences in a text file.
 struct doc tally(char filename[]){
 	int wordcount = 0;
 	int syllcount = 0;
@@ -48,8 +58,11 @@ struct doc tally(char filename[]){
 		return empty;
 	}
 	char w = 0;
-	
+	char lastw = 0;
 	while(text.get(w)){
+		if(lastw == 'e' && (w == ' ' || w == '\n')){
+			--syllcount;
+		}
 		if(w == ' ' || w == '\n'){//whitespace
 			if(validword){
 				++wordcount;
