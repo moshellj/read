@@ -4,11 +4,12 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
+#include <string>
 
 using namespace std;
 
-vector<char> vowels{'a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U', 'y', 'Y'};
-vector<char> sentend{'.', ':', ';', '?', '!'};
+const vector<char> vowels{'a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U', 'y', 'Y'};
+const vector<char> sentend{'.', ':', ';', '?', '!'};
 
 struct doc {
 	int word;
@@ -17,6 +18,7 @@ struct doc {
 };
 
 struct doc tally(char filename[]);
+vector<string> getEasies(char filename[]);
 
 int main(int argc, char* argv[]){
 	if(argc != 2){
@@ -42,6 +44,13 @@ int main(int argc, char* argv[]){
 	dubIndex = alpha*11.8 + beta*0.39 - 15.59;
 	
 	printf("%i\t%.1f\n", findex, dubIndex);
+	
+	//test dale-chall
+	vector<string> easyWords = getEasies("/pub/pounds/CSC330/dalechall/wordlist1995.txt");
+	for(int i = 0; i < easyWords.size(); i++){
+		cout << easyWords[i] << ", ";
+	}
+	cout << endl;
 
 }
 
@@ -108,6 +117,17 @@ struct doc tally(char filename[]){
 	return give;
 }
 
-
-
-
+//tokenizes the dale-chall word list
+vector<string> getEasies(char filename[]){
+	vector<string> give;
+	ifstream easyWords(filename);
+	string current;
+	while(easyWords.good()){
+		getline(easyWords, current);
+		give.push_back(current);
+	}
+	easyWords.close();
+	//remove bad last entry
+	give.erase(give.size() - 1);
+	return give;
+}
