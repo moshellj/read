@@ -22,7 +22,11 @@ int main(int argc, char* argv[]){
 	if(argc != 2){
 		cerr << "Wrong number of arguments.\n";
 	}
+	
 	doc count = tally(argv[1]);
+	if(count.syll == 0){
+		return 0;
+	}
 	
 	//flesch
 	double alpha;
@@ -91,6 +95,7 @@ struct doc tally(char filename[]){
 			}
 		}
 	}
+	text.close();
 	if(validsent){
 		++sentcount;
 	}
