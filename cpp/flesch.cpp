@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <string>
+#include <cctype>
 
 using namespace std;
 
@@ -19,6 +20,7 @@ struct doc {
 
 struct doc tally(char filename[]);
 vector<string> getEasies(char filename[]);
+//int judgeWords(vector<string> dictionary, char filename[]);
 
 int main(int argc, char* argv[]){
 	if(argc != 2){
@@ -43,14 +45,17 @@ int main(int argc, char* argv[]){
 	beta = (double)count.word / (double)count.sent;
 	dubIndex = alpha*11.8 + beta*0.39 - 15.59;
 	
+	//dale-chall
+	//int diffWords;
+	
 	printf("%i\t%.1f\n", findex, dubIndex);
 	
-	//test dale-chall
+	/*//test dale-chall
 	vector<string> easyWords = getEasies("/pub/pounds/CSC330/dalechall/wordlist1995.txt");
 	for(int i = 0; i < easyWords.size(); i++){
 		cout << easyWords[i] << ", ";
 	}
-	cout << endl;
+	cout << endl;*/
 
 }
 
@@ -122,12 +127,39 @@ vector<string> getEasies(char filename[]){
 	vector<string> give;
 	ifstream easyWords(filename);
 	string current;
+	char rawstr[256];
 	while(easyWords.good()){
-		getline(easyWords, current);
+		//getline(easyWords, current);
+		easyWords.getline(rawstr, 256);
+		//convert to lowercase
+		for(int i = 0; rawstr[i]; ++i){
+			rawstr[i] = tolower(rawstr[i]);
+		}
+		current = rawstr;
 		give.push_back(current);
 	}
 	easyWords.close();
 	//remove bad last entry
-	give.erase(give.size() - 1);
+	give.erase(give.end() - 1);
 	return give;
 }
+
+/*
+//counts the number of difficult words
+int judgeWords(vector<string> dictionary, char filename[]){
+	ifstream text(filename);
+	if(!text.good()){
+		return -1;
+	}
+	string current;
+	bool isword = false;
+	while(text >> current){//separates by space and checks for end of file
+		isword = false;
+		for(int i = 0; i < current.size(); ++i){//check if token is word
+			if(isalpha(current[i])){
+				isword = true;
+			}
+		}
+		//TODO
+	}
+}*/
