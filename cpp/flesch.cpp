@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <cctype>
+#include <cstdlib>
 
 using namespace std;
 
@@ -13,23 +14,24 @@ const vector<char> vowels{'a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U', 'y',
 const vector<char> sentend{'.', ':', ';', '?', '!'};
 
 struct doc {
-	int word;
-	int syll;
-	int sent;
+	long word;
+	long syll;
+	long sent;
 };
 
-struct doc tally(char filename[], vector<string> words);
+struct doc tally(char filename[], vector<string>& words);
 vector<string> getEasies(char filename[]);
-//int judgeWords(vector<string> dictionary, char filename[]);
+long judgeWords(vector<string>& dict, vector<string>& words);
 
 int main(int argc, char* argv[]){
 	if(argc != 2){
-		cerr << "Wrong number of arguments.\n";
+		cerr << "Wrong number of arguments. Use one argument: the filepath to the text to be analyzed.\n";
 		return 0;
 	}
 	
 	vector<string> words;
 	
+	//count words, syllables, and sentences, and tokenize words
 	doc count = tally(argv[1], words);
 	if(count.syll == 0){
 		return 0;
@@ -44,31 +46,32 @@ int main(int argc, char* argv[]){
         int findex = round(dubIndex);
 	
 	//flesch-kincaid
-	alpha = (double)count.syll / (double)count.word;
-	beta = (double)count.word / (double)count.sent;
+	//alpha = (double)count.syll / (double)count.word;
+	//beta = (double)count.word / (double)count.sent;
 	dubIndex = alpha*11.8 + beta*0.39 - 15.59;
 	
 	//dale-chall
-	//int diffWords;
-	
-	printf("Words=%i, Syll=%i, Sent=%i\n", count.word, count.syll, count.sent);
-	printf("%i\t%.1f\n", findex, dubIndex);
-	
-	/*//test dale-chall
 	vector<string> easyWords = getEasies("/pub/pounds/CSC330/dalechall/wordlist1995.txt");
-	for(int i = 0; i < easyWords.size(); i++){
-		cout << easyWords[i] << ", ";
-	}
-	cout << endl;*/
-
+	
+	long diffWords = judgeWords(easyWords, words);
+	
+	double dcalpha = (double)diffWords / (double)count.word;
+	double dalechall = dcalpha*100.0*0.1579 + beta*0.0496;
+	if(dcalpha > 0.05){ dalechall += 3.6365; }
+	
+	//output
+	printf("Flesch:     Flesch-Kincaid:    Dale-Chall:\n");
+	printf("    %i                 %.1f            %.1f", findex, dubIndex, dalechall);
+	
+	return 0;
 }
 
 //counts the words, syllables, and sentences in a text file.
-//returns the tokenized words.
-struct doc tally(char filename[], vector<string> words){
-	int wordcount = 0;
-	int syllcount = 0;
-	int sentcount = 0;
+//returns the tokenized words in vector words.
+struct doc tally(char filename[], vector<string>& words){
+	long wordcount = 0;
+	long syllcount = 0;
+	long sentcount = 0;
 	bool validword = false;
 	bool validsent = false;
 	bool lchvowel = false;
@@ -131,6 +134,7 @@ struct doc tally(char filename[], vector<string> words){
 		}
 		//lastw = w;
 	}
+	
 	text.close();
 	if(validsent){
 		++sentcount;
@@ -149,43 +153,72 @@ vector<string> getEasies(char filename[]){
 	vector<string> give;
 	ifstream easyWords(filename);
 	string current;
-	string temp;
 	char rawstr[256];
+
 	while(easyWords.good()){
 		//getline(easyWords, current);
 		easyWords.getline(rawstr, 256);
-		temp = "";
+		current = "";
 		//convert to lowercase and remove punctuation
 		for(int i = 0; rawstr[i]; ++i){
 			if(!ispunct(rawstr[i]) || rawstr[i] == '\''){
-				rawstr[i] = tolower(rawstr[i]);
+				current += tolower(rawstr[i]);
 			}
 		}
-		current = rawstr;
 		give.push_back(current);
 	}
+
 	easyWords.close();
 	//remove bad last entry
 	give.erase(give.end() - 1);
+	//sort!
+	sort(give.begin(), give.end());
 	return give;
 }
 
-/*
-//counts the number of difficult words
-int judgeWords(vector<string> dictionary, char filename[]){
-	ifstream text(filename);
-	if(!text.good()){
-		return -1;
-	}
-	string current;
-	bool isword = false;
-	while(text >> current){//separates by space and checks for end of file
-		isword = false;
-		for(int i = 0; i < current.size(); ++i){//check if token is word
-			if(isalpha(current[i])){
-				isword = true;
+//counts the number of difficult words in the text.
+long judgeWords(vector<string>& dict, vector<string>& words){
+	
+	long diffs = 0;
+	
+	string word;
+	const long wsize = words.size();
+	const long dsize = dict.size();
+	long lob;//inclusive lower bound
+	long hib;//inclusive higher bound
+	long mid;//comparison point
+	
+	for(long i = 0; i < words.size(); i++){
+		word = words[i];
+		//binary search for word in dict
+		lob = 0;
+		hib = dsize - 1;
+		while(true){
+			mid = (lob + hib)/2;
+			//cerr << lob << '\t' << mid << '\t' << hib << '\t' << word << '\t' << dict[mid] << '\n';
+			if(dict[mid] == word){//word found
+				break;
+			}else if(lob == hib){//word not in dict
+				++diffs;
+				break;
+			}else if(word < dict[mid]){//lower half
+				hib = mid;
+			}else if(dict[mid] < word){//higher half
+				lob = mid + 1;
+			}else{//error
+				cerr << "Binary search error\n";
+				abort();
 			}
 		}
-		//TODO
 	}
-}*/
+	
+	return diffs;
+}
+
+
+
+
+
+
+
+
