@@ -18,16 +18,19 @@ struct doc {
 	int sent;
 };
 
-struct doc tally(char filename[]);
+struct doc tally(char filename[], vector<string> words);
 vector<string> getEasies(char filename[]);
 //int judgeWords(vector<string> dictionary, char filename[]);
 
 int main(int argc, char* argv[]){
 	if(argc != 2){
 		cerr << "Wrong number of arguments.\n";
+		return 0;
 	}
 	
-	doc count = tally(argv[1]);
+	vector<string> words;
+	
+	doc count = tally(argv[1], words);
 	if(count.syll == 0){
 		return 0;
 	}
@@ -48,6 +51,7 @@ int main(int argc, char* argv[]){
 	//dale-chall
 	//int diffWords;
 	
+	printf("Words=%i, Syll=%i, Sent=%i\n", count.word, count.syll, count.sent);
 	printf("%i\t%.1f\n", findex, dubIndex);
 	
 	/*//test dale-chall
@@ -60,13 +64,15 @@ int main(int argc, char* argv[]){
 }
 
 //counts the words, syllables, and sentences in a text file.
-struct doc tally(char filename[]){
+//returns the tokenized words.
+struct doc tally(char filename[], vector<string> words){
 	int wordcount = 0;
 	int syllcount = 0;
 	int sentcount = 0;
 	bool validword = false;
 	bool validsent = false;
 	bool lchvowel = false;
+	string word;
 	
 	ifstream text;
 	text.open(filename);
@@ -75,16 +81,31 @@ struct doc tally(char filename[]){
 		doc empty;
 		return empty;
 	}
+	
 	char w = 0;
 	char lastw = 0;
+	//words include trailing whitespace+newlines, and punctuation.
 	while(text.get(w)){
+		word += w;
 		if(lastw == 'e' && (w == ' ' || w == '\n')){
 			--syllcount;
 		}
 		if(w == ' ' || w == '\n'){//whitespace
 			if(validword){
 				++wordcount;
+				//tokenize words: remove last char
+				word.erase(word.size() - 1);
+				//lowercasize and remove punctuation
+				string newword;
+				for(int i = 0; i < word.size(); i++){
+					if(!ispunct(word[i]) || word[i] == '\''){
+						newword += tolower(word[i]);
+					}
+				}
+				//cout << newword << ';' << endl;
+				words.push_back(newword);
 			}
+			word = "";
 			validword = false;
 		}
 		
@@ -108,6 +129,7 @@ struct doc tally(char filename[]){
 				validsent = false;
 			}
 		}
+		//lastw = w;
 	}
 	text.close();
 	if(validsent){
@@ -127,13 +149,17 @@ vector<string> getEasies(char filename[]){
 	vector<string> give;
 	ifstream easyWords(filename);
 	string current;
+	string temp;
 	char rawstr[256];
 	while(easyWords.good()){
 		//getline(easyWords, current);
 		easyWords.getline(rawstr, 256);
-		//convert to lowercase
+		temp = "";
+		//convert to lowercase and remove punctuation
 		for(int i = 0; rawstr[i]; ++i){
-			rawstr[i] = tolower(rawstr[i]);
+			if(!ispunct(rawstr[i]) || rawstr[i] == '\''){
+				rawstr[i] = tolower(rawstr[i]);
+			}
 		}
 		current = rawstr;
 		give.push_back(current);
