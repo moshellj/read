@@ -1,10 +1,13 @@
+import java.util.ArrayList;
 
 class Count{
 	public int words;
 	public int sylls;
 	public int sents;
-	public String[] wordList;
+	public ArrayList<String> wordList;
 	
-	public Count(){}//default constructor
+	public Count(){
+		wordList = new ArrayList<String>();
+	}//default constructor
 	
 }
