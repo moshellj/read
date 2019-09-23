@@ -8,6 +8,11 @@ public static void main(String args[]){
 	
 	Count doc = tally(filename);
 	
+	if(doc.words == 0){
+		System.out.println("Failed to open file.");
+		System.exit(0);
+	}
+	
 	double alpha = Double.valueOf(doc.sylls) / Double.valueOf(doc.words);
 	double beta  = Double.valueOf(doc.words) / Double.valueOf(doc.sents);
 	
