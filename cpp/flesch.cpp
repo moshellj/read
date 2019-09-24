@@ -87,15 +87,22 @@ struct doc tally(char filename[], vector<string>& words){
 	
 	char w = 0;
 	char lastw = 0;
+	int wordSylCount = 0;
 	//words include trailing whitespace+newlines, and punctuation.
 	while(text.get(w)){
 		word += w;
-		if(lastw == 'e' && (w == ' ' || w == '\n')){
-			--syllcount;
+		if(lastw == 'e' && (w == ' ' || w == '\n')){//last e
+			--wordSylCount;
 		}
 		if(w == ' ' || w == '\n'){//whitespace
 			if(validword){
 				++wordcount;
+				//syllables
+				if(wordSylCount < 1){
+					wordSylCount = 1;
+				}
+				syllcount += wordSylCount;
+				wordSylCount = 0;
 				//tokenize words: remove last char
 				word.erase(word.size() - 1);
 				//lowercasize and remove punctuation
@@ -119,7 +126,7 @@ struct doc tally(char filename[], vector<string>& words){
 		
 		if(find(vowels.begin(), vowels.end(), w) != vowels.end()){//vowels for syll
 			if(!lchvowel){
-				++syllcount;
+				++wordSylCount;
 			}
 			lchvowel = true;
 		}else{
@@ -132,7 +139,7 @@ struct doc tally(char filename[], vector<string>& words){
 				validsent = false;
 			}
 		}
-		//lastw = w;
+		lastw = w;
 	}
 	
 	text.close();
