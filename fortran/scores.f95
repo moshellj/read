@@ -1,13 +1,13 @@
 program scores
-        implicit none
-    character(:), allocatable::line, outline, word, filename
+    implicit none
+    character(:), allocatable::line, outline, token, filename
     character, dimension(:), allocatable :: string
     integer :: filesize
     
     interface
-        subroutine get_next_token(inline, outline, word)
+        subroutine get_next_token(inline, outline, token)
             character (*) :: inline
-            character(:), allocatable ::outline, word
+            character(:), allocatable ::outline, token
         end subroutine get_next_token
         subroutine read_file(filename, string, filesize)
             character(:), allocatable :: filename
@@ -19,24 +19,21 @@ program scores
     filename = "/home/moshell_jw/alice.txt"!replace with argument
     
     call read_file(filename, string, filesize)
-    !write (*,*) string
-    
-    goto 300    
-    line = "A line of text"
-    print *, line
-    print *, "The length of the string is ", len(line)
-    
-    outline=line
+    write (*,*) string
+    !line = "A line of text"
+    goto 300
+    outline = " "
     
     do while (len(outline) .ne. 0)
-        call get_next_token(line, outline, word)
-        print *, word
+        call get_next_token(line, outline, token)
+        print *, token
         line = outline
     enddo
     300 continue
 end program scores
 
 !shamelessly lifted from the example
+!divides by whitespace and returns the next thing.
 subroutine get_next_token(inline, outline, token)
     character (*)::inline
     character(:), allocatable::outline, token
@@ -49,8 +46,10 @@ subroutine get_next_token(inline, outline, token)
 
     ! find non-blank
     do while (.not. foundFirst .and. (i < len(inline)))
-        if (inline(i:i) .eq. " ") then
-            i = i + 1
+    ! while not-whitespace not found and i < length of line
+        if (inline(i:i) .eq. " " .or. inline(i:i) .eq. "\n") then 
+            !if line at pos i == space or enter
+            i = i + 1!keep searching
         else
             foundFirst = .true.
         endif
@@ -79,7 +78,7 @@ subroutine read_file(filename, string, filesize)
     inquire(FILE=filename, SIZE=filesize)
     open(unit=5,status="old",access="direct",form="unformatted",recl=1,FILE=filename)
     allocate(string(filesize))
-    filesize = size(string) ! WHY DOES ALLOCATE SET THE SIZE VARIABLE TO ZERO
+    !filesize = size(string)
     counter=1
     100 read(5, rec=counter, err=200) input
         string (counter:counter) = input
