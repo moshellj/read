@@ -1,7 +1,9 @@
 program scores
     implicit none
     character(:), allocatable::line, outline, token, filename, string
+    character(:), allocatable:: dachwolifina ! dale chall word list file name
     integer :: filesize
+    character(len=200) :: tempfilename
     
     interface
         subroutine get_next_token(inline, outline, token)
@@ -17,8 +19,10 @@ program scores
         end subroutine fix_token
     end interface
     
-    filename = "/home/moshell_jw/alice.txt"!replace with argument
-    
+    call get_command_argument(1, tempfilename)
+    filename = tempfilename ! necessary
+    !filename = "/home/moshell_jw/alice.txt"!replace with argument
+    dachwolifina = "/pub/pounds/CSC330/dalechall/wordlist1995.txt"
     call read_file(filename, string, filesize)
     !write (*,*) string
     !line = "A line of text"
@@ -93,7 +97,7 @@ end subroutine read_file
 ! modifies a token string for ease of parsing.
 ! strips nonletters except for ' (and thus may return an empty string)
 ! be sure to reason about sentence-ending before calling this
-! normalizes to lowercase. Elemental, for chall list.
+! normalizes to lowercase
 subroutine fix_token(string)
     character(:), allocatable :: string
     character(:), allocatable :: stripset
