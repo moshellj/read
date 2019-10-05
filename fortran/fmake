@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+gfortran -g -fbackslash scores.f95
