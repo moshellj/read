@@ -4,6 +4,10 @@ program scores
     character(:), allocatable:: dachwolifina ! dale chall word list file name
     integer :: filesize
     character(len=200) :: tempfilename
+    integer :: syllcount, wordcount, sentcount, diffcount, syllinword, i
+    character(:), allocatable :: sentend, letters, vowels
+    logical :: validsent, lastcharvowel
+    real(kind=8) :: alpha, beta
     
     interface
         subroutine get_next_token(inline, outline, token)
@@ -19,22 +23,68 @@ program scores
         end subroutine fix_token
     end interface
     
+    sentend = "!?.;:"
+    outline = " "
+    dachwolifina = "/pub/pounds/CSC330/dalechall/wordlist1995.txt"
+    letters = "qwertyuiopasdfghjklzxcvbnm"
+    vowels = "aeiouy"
+    
     call get_command_argument(1, tempfilename)
     filename = tempfilename ! necessary
     !filename = "/home/moshell_jw/alice.txt"!replace with argument
-    dachwolifina = "/pub/pounds/CSC330/dalechall/wordlist1995.txt"
     call read_file(filename, string, filesize)
     !write (*,*) string
     !line = "A line of text"
     
-    outline = " "
-    
+    ! count syllables, words, and sentences
     do while (len(outline) .ne. 0)
         call get_next_token(string, outline, token)
+        
+        !punct
+        if (scan(token, sentend) > 0 .and. validsent) then
+            sentcount = sentcount + 1
+            validsent = .false.
+        endif
+        
         call fix_token(token)
-        print *, token, len(token)
+        
+        !word
+        if(scan(token, letters) > 0) then
+            wordcount = wordcount + 1
+            validsent = .true.
+            
+            !syllables
+            i = 1
+            lastcharvowel = .false.
+            do while (i <= len(token))
+                if(scan(token(i:i), vowels) > 0) then!vowel
+                    if(.not. lastcharvowel) then
+                        syllinword = syllinword + 1
+                    endif
+                    lastcharvowel = .true.
+                else
+                    lastcharvowel = .false.
+                endif
+                i = i + 1
+            enddo
+            if(token(len(token):len(token)) .eq. "e") then
+                syllinword = syllinword - 1
+            endif
+            if(syllinword < 1) then
+                syllinword = 1
+            endif
+            syllcount = syllcount + syllinword
+        endif
+        
+        syllinword = 0
         string = outline
     enddo
+    
+    !calculate scores
+    alpha = real(syllcount, 8) / real(wordcount, 8)
+    beta = real(wordcount, 8) / real(sentcount, 8)
+    print "(A,I3)", "Flesch index: ", nint(206.835 - alpha*84.6 - beta*1.015)
+    print "(A,F4.1)", "Flesch-Kincaid index: ", (alpha*11.8 + beta*0.39 - 15.59)
     
 end program scores
 
