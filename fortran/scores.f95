@@ -5,7 +5,7 @@ program scores
     
     interface
         subroutine get_next_token(inline, outline, token)
-            character (*) :: inline
+            character(:), allocatable:: inline
             character(:), allocatable :: outline, token
         end subroutine get_next_token
         subroutine read_file(filename, string, filesize)
@@ -17,30 +17,30 @@ program scores
     filename = "/home/moshell_jw/alice.txt"!replace with argument
     
     call read_file(filename, string, filesize)
-    write (*,*) string
+    !write (*,*) string
     !line = "A line of text"
-    goto 300
+    
     outline = " "
     
     do while (len(outline) .ne. 0)
-        call get_next_token(line, outline, token)
+        call get_next_token(string, outline, token)
         print *, token
-        line = outline
+        string = outline
     enddo
-    300 continue
+    
 end program scores
 
 !shamelessly lifted from the example
-!divides by whitespace and returns the next thing.
+!divides by whitespace and returns the next token without modifying it.
 subroutine get_next_token(inline, outline, token)
-    character (*)::inline
+    character(:), allocatable::inline
     character(:), allocatable::outline, token
     integer::i,j
     logical::foundFirst, foundLast
 
     foundFirst=.false.
     foundLast=.false.
-    i=0
+    i=1
 
     ! find non-blank
     do while (.not. foundFirst .and. (i < len(inline)))
@@ -55,14 +55,13 @@ subroutine get_next_token(inline, outline, token)
     
     j = i
     do while (foundFirst .and. .not. foundLast .and. (j < len(inline)))
-        if(inline(j:j) .ne. " ") then
+        if(inline(j:j) .ne. " " .and. inline(j:j) .ne. "\n") then
             j = j + 1
         else
             foundLast = .true.
         endif
     enddo
-    
-    token = trim(inline(i:j))
+    token = trim(inline(i:j-1))
     outline = trim(inline(j+1:len(inline)))
 end subroutine get_next_token
 
