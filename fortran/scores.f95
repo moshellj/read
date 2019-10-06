@@ -2,9 +2,10 @@
 !TODO: investigate binary search for false negatives
 program scores
     implicit none
-    character(:), allocatable::line, outline, token, filename, string
+    character(:), allocatable::line, token, filename, string
     character(:), allocatable:: dachwolifina ! dale chall word list file name
     integer :: filesize
+    integer(kind=8) :: start
     character(len=200) :: tempfilename
     integer :: syllcount, wordcount, sentcount, diffcount, syllinword, i
     character(:), allocatable :: sentend, letters, vowels
@@ -13,10 +14,10 @@ program scores
     character(20), dimension(:), allocatable :: dcwordlist
     
     sentend = "!?.;:"
-    outline = " "
     dachwolifina = "/pub/pounds/CSC330/dalechall/wordlist1995.txt"
     letters = "qwertyuiopasdfghjklzxcvbnm"
     vowels = "aeiouy"
+    start = 1
     
     call cpu_time(oldtime)
     
@@ -27,12 +28,12 @@ program scores
     call get_easies(dachwolifina, dcwordlist)
     !write (*,*) string
     
-    call timer(oldtime, time, "file load")
+    !call timer(oldtime, time, "file load")
     
     ! count syllables, words, and sentences
-    do while (len(outline) .ne. 0)
-        call get_next_token(string, outline, token)
-            call timer(oldtime, time, "tokenize ")
+    do while (start < filesize)
+        call get_next_token(string, token, start)
+            !call timer(oldtime, time, "tokenize ")
         !punct
         if (scan(token, sentend) > 0 .and. validsent) then
             sentcount = sentcount + 1
@@ -40,7 +41,7 @@ program scores
         endif
         
         call fix_token(token)
-            call timer(oldtime, time, "tokenfix ")
+            !call timer(oldtime, time, "tokenfix ")
         !word
         if(scan(token, letters) > 0) then
             wordcount = wordcount + 1
@@ -54,7 +55,7 @@ program scores
             else
                 !print *, "EASY: ", token
             endif
-            call timer(oldtime, time, "dalechall")
+            !call timer(oldtime, time, "dalechall")
             
             !syllables
             i = 1
@@ -77,12 +78,10 @@ program scores
                 syllinword = 1
             endif
             syllcount = syllcount + syllinword
-                call timer(oldtime, time, "syllables")
+                !call timer(oldtime, time, "syllables")
         endif
         
         syllinword = 0
-        string = outline
-            call timer(oldtime, time, "reassigns")
     enddo
     
     !calculate scores
@@ -111,23 +110,21 @@ end subroutine
 
 ! returns a array of processed strings representing the dale-chall dictionary.
 subroutine get_easies(filename, dict)
-    character(:), allocatable :: filename, filestring, outline, token
+    character(:), allocatable :: filename, filestring, token
     character(20), dimension(:), allocatable :: dict
-    integer :: filesize, i
+    integer :: filesize
+    integer(kind=8) :: i, estart
     
     i = 1
     call read_file(filename, filestring, filesize)
     
-    outline = " "
-    
     allocate(dict(2950)) !best practice
-    do while (len(outline) .ne. 0)
-        call get_next_token(filestring, outline, token)
+    do while (estart < filesize)
+        call get_next_token(filestring, token, estart)
         call fix_token(token)
         dict(i) = token
         !print *, i,'.', dict(i),'.',token,'.'
         i = i + 1
-        filestring = outline
     enddo
 end subroutine get_easies
 
@@ -156,15 +153,15 @@ end function is_easy
 
 !shamelessly lifted from the example
 !divides by whitespace and returns the next token without modifying it.
-subroutine get_next_token(inline, outline, token)
-    character(:), allocatable::inline
-    character(:), allocatable::outline, token
-    integer::i,j
+!midified to not change input string
+subroutine get_next_token(inline, token, start)
+    character(:), allocatable::inline, token
+    integer(kind=8):: i, j, start
     logical::foundFirst, foundLast
 
     foundFirst=.false.
     foundLast=.false.
-    i=1
+    i=start
 
     ! find non-blank
     do while (.not. foundFirst .and. (i < len(inline)))
@@ -186,7 +183,8 @@ subroutine get_next_token(inline, outline, token)
         endif
     enddo
     token = trim(inline(i:j-1))
-    outline = trim(inline(j+1:len(inline)))
+    !outline = trim(inline(j+1:len(inline))) replaced by
+    start = j + 1
 end subroutine get_next_token
 
 !shamelessly lifted from the example reader3
