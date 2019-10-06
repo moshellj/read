@@ -1,3 +1,4 @@
+!fortran sucks
 program scores
     implicit none
     character(:), allocatable::line, outline, token, filename, string
@@ -7,26 +8,26 @@ program scores
     integer :: syllcount, wordcount, sentcount, diffcount, syllinword, i
     character(:), allocatable :: sentend, letters, vowels
     logical :: validsent, lastcharvowel
-    real(kind=8) :: alpha, beta
+    real(kind=8) :: alpha, beta, dcalpha, dcscore
     character(20), dimension(:), allocatable :: dcwordlist
    
-    interface
-        subroutine get_next_token(inline, outline, token)
-            character(:), allocatable:: inline
-            character(:), allocatable :: outline, token
-        end subroutine get_next_token
-        subroutine read_file(filename, string, filesize)
-            character(:), allocatable :: filename, string
-            integer(KIND=4) :: filesize
-        end subroutine
-        subroutine fix_token(string)
-            character(:), allocatable :: string
-        end subroutine fix_token
-        subroutine get_easies(filename, dict)
-            character(:), allocatable :: filename
-            character(20), dimension(:), allocatable :: dict
-        end subroutine get_easies
-    end interface
+    !interface
+    !    subroutine get_next_token(inline, outline, token)
+    !        character(:), allocatable:: inline
+    !        character(:), allocatable :: outline, token
+    !    end subroutine get_next_token
+    !    subroutine read_file(filename, string, filesize)
+    !        character(:), allocatable :: filename, string
+    !        integer(KIND=4) :: filesize
+    !    end subroutine
+    !    subroutine fix_token(string)
+    !        character(:), allocatable :: string
+    !    end subroutine fix_token
+    !    subroutine get_easies(filename, dict)
+    !        character(:), allocatable :: filename
+    !        character(20), dimension(:), allocatable :: dict
+    !    end subroutine get_easies
+    !end interface
     
     sentend = "!?.;:"
     outline = " "
@@ -38,8 +39,8 @@ program scores
     filename = tempfilename ! necessary
     !filename = "/home/moshell_jw/alice.txt"!replace with argument
     call read_file(filename, string, filesize)
+    call get_easies(dachwolifina, dcwordlist)
     !write (*,*) string
-    !line = "A line of text"
     
     ! count syllables, words, and sentences
     do while (len(outline) .ne. 0)
@@ -57,6 +58,11 @@ program scores
         if(scan(token, letters) > 0) then
             wordcount = wordcount + 1
             validsent = .true.
+            
+            !dcwl
+            if(.not. is_easy(token, dcwordlist)) then
+                diffcount = diffcount + 1
+            endif
             
             !syllables
             i = 1
@@ -88,13 +94,19 @@ program scores
     !calculate scores
     alpha = real(syllcount, 8) / real(wordcount, 8)
     beta = real(wordcount, 8) / real(sentcount, 8)
+    dcalpha = real(diffcount, 8) / real(wordcount, 8)
+    print *, "diffcount= ", diffcount, wordcount, dcalpha
+    dcscore = dcalpha*15.79 + beta*0.0496
+    if(dcalpha > 0.05) then
+        dcscore = dcscore + 3.6365
+    endif
     print "(A,I3)", "Flesch index: ", nint(206.835 - alpha*84.6 - beta*1.015)
     print "(A,F4.1)", "Flesch-Kincaid index: ", (alpha*11.8 + beta*0.39 - 15.59)
+    print "(A,F8.1)", "Dale-Chall Readability Score: ", dcscore
     
-    call get_easies(dachwolifina, dcwordlist)
-    print *, dcwordlist
-    
-end program scores
+
+contains
+!end program scores
 
 ! returns a array of processed strings representing the dale-chall dictionary.
 subroutine get_easies(filename, dict)
@@ -102,19 +114,19 @@ subroutine get_easies(filename, dict)
     character(20), dimension(:), allocatable :: dict
     integer :: filesize, i
     
-    interface
-        subroutine get_next_token(inline, outline, token)
-            character(:), allocatable:: inline
-            character(:), allocatable :: outline, token
-        end subroutine
-        subroutine read_file(filename, string, filesize)
-            character(:), allocatable :: filename, string
-            integer(KIND=4) :: filesize
-        end subroutine
-        subroutine fix_token(string)
-            character(:), allocatable :: string
-        end subroutine
-    end interface
+    !interface
+    !    subroutine get_next_token(inline, outline, token)
+    !        character(:), allocatable:: inline
+    !        character(:), allocatable :: outline, token
+    !    end subroutine
+    !    subroutine read_file(filename, string, filesize)
+    !        character(:), allocatable :: filename, string
+    !        integer(KIND=4) :: filesize
+    !    end subroutine
+    !    subroutine fix_token(string)
+    !        character(:), allocatable :: string
+    !    end subroutine
+    !end interface
     
     i = 1
     call read_file(filename, filestring, filesize)
@@ -133,10 +145,25 @@ subroutine get_easies(filename, dict)
 end subroutine get_easies
 
 !does binary search for text in wordlist
-logical function is_easy (text, dcwordlist)
+logical function is_easy (text, dcwordlist) result(give)
     character(:), allocatable, intent(in) :: text
-    character(20), allocatable, intent(in) :: dcwordlist
-    
+    character(20), allocatable, dimension(:), intent(in) :: dcwordlist
+    integer :: lob, hib, mid
+    lob = 1
+    hib = 2950
+    do while(lob < hib)
+        mid = (hib + lob) / 2
+        if(trim(dcwordlist(mid)) < text) then
+            lob = mid + 1
+        else if(trim(dcwordlist(mid)) > text) then
+            hib = mid
+        else!equal
+            give = .true.
+            return
+        endif
+    enddo
+    give = .false.
+    return
 end function is_easy
 
 !shamelessly lifted from the example
@@ -224,3 +251,5 @@ subroutine fix_token(string)
     enddo
     string = string(1:writehead - 1)
 end subroutine fix_token
+
+end program scores
