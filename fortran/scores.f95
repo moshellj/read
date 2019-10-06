@@ -8,7 +8,8 @@ program scores
     character(:), allocatable :: sentend, letters, vowels
     logical :: validsent, lastcharvowel
     real(kind=8) :: alpha, beta
-    
+    character(:), dimension(:), allocatable :: dcwordlist
+   
     interface
         subroutine get_next_token(inline, outline, token)
             character(:), allocatable:: inline
@@ -21,6 +22,10 @@ program scores
         subroutine fix_token(string)
             character(:), allocatable :: string
         end subroutine fix_token
+        subroutine get_easies(filename, dict)
+            character(:), allocatable :: filename
+            character(:), dimension(:), allocatable :: dict
+        end subroutine get_easies
     end interface
     
     sentend = "!?.;:"
@@ -86,7 +91,41 @@ program scores
     print "(A,I3)", "Flesch index: ", nint(206.835 - alpha*84.6 - beta*1.015)
     print "(A,F4.1)", "Flesch-Kincaid index: ", (alpha*11.8 + beta*0.39 - 15.59)
     
+    call get_easies(dachwolifina, dcwordlist)
+    !print *, dcwordlist
+    
 end program scores
+
+! returns a array of processed strings representing the dale-chall dictionary.
+subroutine get_easies(filename, dict)
+    character(:), allocatable :: filename, filestring, outline, token
+    character(:), dimension(:), allocatable :: dict
+    integer :: filesize, i
+    
+    interface
+        subroutine get_next_token(inline, outline, token)
+            character(:), allocatable:: inline
+            character(:), allocatable :: outline, token
+        end subroutine get_next_token
+        subroutine read_file(filename, string, filesize)
+            character(:), allocatable :: filename, string
+            integer(KIND=4) :: filesize
+        end subroutine
+    end interface
+    
+    i = 1
+    call read_file(filename, filestring, filesize)
+    
+    outline = " "
+    
+    do while (len(outline) .ne. 0)
+        call get_next_token(filestring, outline, token)
+        dict(i) = token
+        print *, i,'.', dict(i),'.',token,'.'
+        i = i + 1
+        filestring = outline
+    enddo
+end subroutine get_easies
 
 !shamelessly lifted from the example
 !divides by whitespace and returns the next token without modifying it.
@@ -103,7 +142,7 @@ subroutine get_next_token(inline, outline, token)
     ! find non-blank
     do while (.not. foundFirst .and. (i < len(inline)))
     ! while not-whitespace not found and i < length of line
-        if (inline(i:i) .eq. " " .or. inline(i:i) .eq. "\n") then 
+        if (inline(i:i) .eq. " " .or. inline(i:i) .eq. achar(10)) then 
             !if line at pos i == space or enter
             i = i + 1!keep searching
         else
