@@ -17,6 +17,11 @@ program scores
     letters = "qwertyuiopasdfghjklzxcvbnm"
     vowels = "aeiouy"
     start = 1
+    syllcount = 0
+    wordcount = 0
+    sentcount = 0
+    diffcount = 0
+    syllinword= 0
     
     call cpu_time(oldtime)
     
@@ -78,17 +83,21 @@ program scores
         
         syllinword = 0
     enddo
-    
+     
     !calculate scores
     alpha = real(syllcount, 8) / real(wordcount, 8)
     beta = real(wordcount, 8) / real(sentcount, 8)
     dcalpha = real(diffcount, 8) / real(wordcount, 8)
-    !print *, "diffcount= ", diffcount, wordcount, dcalpha
-    filesize = diffcount
     dcscore = dcalpha*15.79 + beta*0.0496
     if(dcalpha > 0.05) then
         dcscore = dcscore + 3.6365
     endif
+    
+    !neat info but unnecessary
+    !print "(A,I0,A,I0,A,I0,A,I0,A)", "There are ", diffcount, &
+    !    " difficult words, ", syllcount, " syllables, ", wordcount,&
+    !    " words, and ", sentcount, " sentences in the document."
+    
     print "(A,I3)", "Flesch index: ", nint(206.835 - alpha*84.6 - beta*1.015)
     print "(A,F4.1)", "Flesch-Kincaid index: ", (alpha*11.8 + beta*0.39 - 15.59)
     print "(A,F4.1)", "Dale-Chall Readability Score: ", dcscore
