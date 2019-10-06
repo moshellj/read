@@ -1,5 +1,4 @@
 !fortran sucks
-!TODO: investigate binary search for false negatives
 program scores
     implicit none
     character(:), allocatable::line, token, filename, string
@@ -23,10 +22,8 @@ program scores
     
     call get_command_argument(1, tempfilename)
     filename = tempfilename ! necessary
-    !filename = "/home/moshell_jw/alice.txt"!replace with argument
     call read_file(filename, string, filesize)
     call get_easies(dachwolifina, dcwordlist)
-    !write (*,*) string
     
     !call timer(oldtime, time, "file load")
     
@@ -34,6 +31,7 @@ program scores
     do while (start < filesize)
         call get_next_token(string, token, start)
             !call timer(oldtime, time, "tokenize ")
+        
         !punct
         if (scan(token, sentend) > 0 .and. validsent) then
             sentcount = sentcount + 1
@@ -41,19 +39,16 @@ program scores
         endif
         
         call fix_token(token)
-            !call timer(oldtime, time, "tokenfix ")
+        !call timer(oldtime, time, "tokenfix ")
+        
         !word
         if(scan(token, letters) > 0) then
             wordcount = wordcount + 1
             validsent = .true.
-            !print *, len(string)
-            !dcwl
+            
+            !dale-chall word judging
             if(.not. is_easy(token, dcwordlist)) then
                 diffcount = diffcount + 1
-                !print *, "DIFF: ", token
-                !call sleep(2)
-            else
-                !print *, "EASY: ", token
             endif
             !call timer(oldtime, time, "dalechall")
             
@@ -88,7 +83,8 @@ program scores
     alpha = real(syllcount, 8) / real(wordcount, 8)
     beta = real(wordcount, 8) / real(sentcount, 8)
     dcalpha = real(diffcount, 8) / real(wordcount, 8)
-    print *, "diffcount= ", diffcount, wordcount, dcalpha
+    !print *, "diffcount= ", diffcount, wordcount, dcalpha
+    filesize = diffcount
     dcscore = dcalpha*15.79 + beta*0.0496
     if(dcalpha > 0.05) then
         dcscore = dcscore + 3.6365
@@ -98,7 +94,6 @@ program scores
     print "(A,F4.1)", "Dale-Chall Readability Score: ", dcscore
     
 contains
-!end program scores
 
 subroutine timer(oldtime, time, message)
     real(kind=8) :: oldtime, time
@@ -116,6 +111,8 @@ subroutine get_easies(filename, dict)
     integer(kind=8) :: i, estart
     
     i = 1
+    estart = 1
+    
     call read_file(filename, filestring, filesize)
     
     allocate(dict(2950)) !best practice
@@ -137,7 +134,7 @@ logical function is_easy (text, dcwordlist) result(give)
     hib = 2950
     do while(lob < hib)
         mid = (hib + lob) / 2
-            !print *, lob, mid, hib, text, "  /  ", trim(dcwordlist(mid))
+        !print *, lob, mid, hib, text, "  /  ", trim(dcwordlist(mid))
         if(trim(dcwordlist(mid)) < text) then
             lob = mid + 1
         else if(trim(dcwordlist(mid)) > text) then
@@ -196,10 +193,8 @@ subroutine read_file(filename, string, filesize)
     inquire(FILE=filename, SIZE=filesize)
     open(unit=5,status="old",access="direct",form="unformatted",recl=1,FILE=filename)
     allocate( character (LEN=filesize) :: string)
-    !filesize = size(string)
     counter=1
     100 read(5, rec=counter, err=200) input
-            !write (*,*) counter
         string (counter:counter) = input
         counter = counter + 1
         goto 100
@@ -209,7 +204,7 @@ subroutine read_file(filename, string, filesize)
 end subroutine read_file
 
 ! modifies a token string for ease of parsing.
-! strips nonletters except for ' (and thus may return an empty string)
+! strips nonletters (and thus may return an empty string)
 ! be sure to reason about sentence-ending before calling this
 ! normalizes to lowercase
 subroutine fix_token(string)
