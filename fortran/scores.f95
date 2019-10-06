@@ -8,7 +8,7 @@ program scores
     character(:), allocatable :: sentend, letters, vowels
     logical :: validsent, lastcharvowel
     real(kind=8) :: alpha, beta
-    character(:), dimension(:), allocatable :: dcwordlist
+    character(20), dimension(:), allocatable :: dcwordlist
    
     interface
         subroutine get_next_token(inline, outline, token)
@@ -24,7 +24,7 @@ program scores
         end subroutine fix_token
         subroutine get_easies(filename, dict)
             character(:), allocatable :: filename
-            character(:), dimension(:), allocatable :: dict
+            character(20), dimension(:), allocatable :: dict
         end subroutine get_easies
     end interface
     
@@ -92,24 +92,27 @@ program scores
     print "(A,F4.1)", "Flesch-Kincaid index: ", (alpha*11.8 + beta*0.39 - 15.59)
     
     call get_easies(dachwolifina, dcwordlist)
-    !print *, dcwordlist
+    print *, dcwordlist
     
 end program scores
 
 ! returns a array of processed strings representing the dale-chall dictionary.
 subroutine get_easies(filename, dict)
     character(:), allocatable :: filename, filestring, outline, token
-    character(:), dimension(:), allocatable :: dict
+    character(20), dimension(:), allocatable :: dict
     integer :: filesize, i
     
     interface
         subroutine get_next_token(inline, outline, token)
             character(:), allocatable:: inline
             character(:), allocatable :: outline, token
-        end subroutine get_next_token
+        end subroutine
         subroutine read_file(filename, string, filesize)
             character(:), allocatable :: filename, string
             integer(KIND=4) :: filesize
+        end subroutine
+        subroutine fix_token(string)
+            character(:), allocatable :: string
         end subroutine
     end interface
     
@@ -118,14 +121,23 @@ subroutine get_easies(filename, dict)
     
     outline = " "
     
+    allocate(dict(2950)) !best practice
     do while (len(outline) .ne. 0)
         call get_next_token(filestring, outline, token)
+        call fix_token(token)
         dict(i) = token
-        print *, i,'.', dict(i),'.',token,'.'
+        !print *, i,'.', dict(i),'.',token,'.'
         i = i + 1
         filestring = outline
     enddo
 end subroutine get_easies
+
+!does binary search for text in wordlist
+logical function is_easy (text, dcwordlist)
+    character(:), allocatable, intent(in) :: text
+    character(20), allocatable, intent(in) :: dcwordlist
+    
+end function is_easy
 
 !shamelessly lifted from the example
 !divides by whitespace and returns the next token without modifying it.
