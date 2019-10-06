@@ -27,14 +27,12 @@ program scores
     call get_easies(dachwolifina, dcwordlist)
     !write (*,*) string
     
-    call cpu_time(time)
-    print *, "loadfiletime = ", (time-oldtime)
-    oldtime = time
+    call timer(oldtime, time, "file load")
     
     ! count syllables, words, and sentences
     do while (len(outline) .ne. 0)
         call get_next_token(string, outline, token)
-        
+            call timer(oldtime, time, "tokenize ")
         !punct
         if (scan(token, sentend) > 0 .and. validsent) then
             sentcount = sentcount + 1
@@ -42,7 +40,7 @@ program scores
         endif
         
         call fix_token(token)
-        
+            call timer(oldtime, time, "tokenfix ")
         !word
         if(scan(token, letters) > 0) then
             wordcount = wordcount + 1
@@ -56,6 +54,7 @@ program scores
             else
                 !print *, "EASY: ", token
             endif
+            call timer(oldtime, time, "dalechall")
             
             !syllables
             i = 1
@@ -78,10 +77,12 @@ program scores
                 syllinword = 1
             endif
             syllcount = syllcount + syllinword
+                call timer(oldtime, time, "syllables")
         endif
         
         syllinword = 0
         string = outline
+            call timer(oldtime, time, "reassigns")
     enddo
     
     !calculate scores
@@ -99,6 +100,14 @@ program scores
     
 contains
 !end program scores
+
+subroutine timer(oldtime, time, message)
+    real(kind=8) :: oldtime, time
+    character(*) :: message
+    call cpu_time(time)
+    print *, message, " = ", (time - oldtime)
+    oldtime = time
+end subroutine
 
 ! returns a array of processed strings representing the dale-chall dictionary.
 subroutine get_easies(filename, dict)
