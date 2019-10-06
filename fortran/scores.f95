@@ -1,4 +1,5 @@
 !fortran sucks
+!TODO: investigate binary search for false negatives
 program scores
     implicit none
     character(:), allocatable::line, outline, token, filename, string
@@ -8,26 +9,8 @@ program scores
     integer :: syllcount, wordcount, sentcount, diffcount, syllinword, i
     character(:), allocatable :: sentend, letters, vowels
     logical :: validsent, lastcharvowel
-    real(kind=8) :: alpha, beta, dcalpha, dcscore
+    real(kind=8) :: alpha, beta, dcalpha, dcscore, time, oldtime
     character(20), dimension(:), allocatable :: dcwordlist
-   
-    !interface
-    !    subroutine get_next_token(inline, outline, token)
-    !        character(:), allocatable:: inline
-    !        character(:), allocatable :: outline, token
-    !    end subroutine get_next_token
-    !    subroutine read_file(filename, string, filesize)
-    !        character(:), allocatable :: filename, string
-    !        integer(KIND=4) :: filesize
-    !    end subroutine
-    !    subroutine fix_token(string)
-    !        character(:), allocatable :: string
-    !    end subroutine fix_token
-    !    subroutine get_easies(filename, dict)
-    !        character(:), allocatable :: filename
-    !        character(20), dimension(:), allocatable :: dict
-    !    end subroutine get_easies
-    !end interface
     
     sentend = "!?.;:"
     outline = " "
@@ -35,12 +18,18 @@ program scores
     letters = "qwertyuiopasdfghjklzxcvbnm"
     vowels = "aeiouy"
     
+    call cpu_time(oldtime)
+    
     call get_command_argument(1, tempfilename)
     filename = tempfilename ! necessary
     !filename = "/home/moshell_jw/alice.txt"!replace with argument
     call read_file(filename, string, filesize)
     call get_easies(dachwolifina, dcwordlist)
     !write (*,*) string
+    
+    call cpu_time(time)
+    print *, "loadfiletime = ", (time-oldtime)
+    oldtime = time
     
     ! count syllables, words, and sentences
     do while (len(outline) .ne. 0)
@@ -58,10 +47,14 @@ program scores
         if(scan(token, letters) > 0) then
             wordcount = wordcount + 1
             validsent = .true.
-            
+            !print *, len(string)
             !dcwl
             if(.not. is_easy(token, dcwordlist)) then
                 diffcount = diffcount + 1
+                !print *, "DIFF: ", token
+                !call sleep(2)
+            else
+                !print *, "EASY: ", token
             endif
             
             !syllables
@@ -102,9 +95,8 @@ program scores
     endif
     print "(A,I3)", "Flesch index: ", nint(206.835 - alpha*84.6 - beta*1.015)
     print "(A,F4.1)", "Flesch-Kincaid index: ", (alpha*11.8 + beta*0.39 - 15.59)
-    print "(A,F8.1)", "Dale-Chall Readability Score: ", dcscore
+    print "(A,F4.1)", "Dale-Chall Readability Score: ", dcscore
     
-
 contains
 !end program scores
 
@@ -113,20 +105,6 @@ subroutine get_easies(filename, dict)
     character(:), allocatable :: filename, filestring, outline, token
     character(20), dimension(:), allocatable :: dict
     integer :: filesize, i
-    
-    !interface
-    !    subroutine get_next_token(inline, outline, token)
-    !        character(:), allocatable:: inline
-    !        character(:), allocatable :: outline, token
-    !    end subroutine
-    !    subroutine read_file(filename, string, filesize)
-    !        character(:), allocatable :: filename, string
-    !        integer(KIND=4) :: filesize
-    !    end subroutine
-    !    subroutine fix_token(string)
-    !        character(:), allocatable :: string
-    !    end subroutine
-    !end interface
     
     i = 1
     call read_file(filename, filestring, filesize)
@@ -153,6 +131,7 @@ logical function is_easy (text, dcwordlist) result(give)
     hib = 2950
     do while(lob < hib)
         mid = (hib + lob) / 2
+            !print *, lob, mid, hib, text, "  /  ", trim(dcwordlist(mid))
         if(trim(dcwordlist(mid)) < text) then
             lob = mid + 1
         else if(trim(dcwordlist(mid)) > text) then
@@ -230,7 +209,7 @@ subroutine fix_token(string)
     character(:), allocatable :: string
     character(:), allocatable :: stripset
     integer :: writehead, readhead
-    stripset = "!@#$%&^*()_+-=[]\{}|;" // '"' // ":,./<>?`~"
+    stripset = "!@#$%&^*()_+-=[]\{}|;" // '"' // "':,./<>?`~"
     !strip: rewrite string to itself. if invalid character, do not write, do not
     !       move write head. trim end.
     writehead = 1
