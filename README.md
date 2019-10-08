@@ -9,3 +9,5 @@ Usage:
 	Java: java Scores [filepath], (or) run [filepath]
 	
 	Fortran: a.out [filepath]. Please compile by running the included script 'fmake'.
+    
+    Perl: perl score.pl [filepath]
