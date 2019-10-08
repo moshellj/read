@@ -11,11 +11,14 @@ procedure flesch is
 	In_File	: aio.File_Type;
 	value	: Character;
 	pos		: Integer;
+	filename : string := "/home/moshell_jw/alice.txt"
+	filesize : natural;
 	s: string(1..10000);
 
 begin
 	
-	AIO.Open(File => In_File, Mode => AIO.In_File, Name => "/home/moshell_jw/alice.txt");
+	--TODO filesize - rosettacode read whole file
+	AIO.Open(File => In_File, Mode => AIO.In_File, Name => filename);
 	
 	pos := 0;
 	while not aio.End_Of_File(In_File) loop
