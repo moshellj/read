@@ -11,3 +11,5 @@ Usage:
 	Fortran: a.out [filepath]. Please compile by running the included script 'fmake'.
     
     Perl: perl score.pl [filepath]
+
+    ada: gnatmake flesch.adb to compile. flesch to run.
