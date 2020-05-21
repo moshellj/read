@@ -1,6 +1,8 @@
 # reading scores
 
-CSC330 project 1
+CSC330 Project 1
+
+Calculates the readability of a piece of text using the Flesch Readability Index, the Flesch-Kincaid Grade Level Index, and the Dale-Chall Readability Score, in five languages.
 
 Usage:
 	
